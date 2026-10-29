@@ -1,6 +1,6 @@
 export function buildDemoReport(url) {
-  let host = '';
-  try { host = new URL(url.startsWith('http')?url:'https://'+url).hostname.replace('www.',''); } catch(e){ host = url; }
+  let host;
+  try { host = new URL(url.startsWith('http')?url:'https://'+url).hostname.replace('www.',''); } catch { host = url; }
   const name = host.split('.')[0].charAt(0).toUpperCase()+host.split('.')[0].slice(1);
   const type = 'Business Website';
   const loc  = 'Global';

@@ -23,16 +23,18 @@ function smoothTo(id) {
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
-async function fetchAuditFromClaude(url) {
+async function fetchAuditFromClaude(url, requestKey) {
   const res = await fetch("/api/audit", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Idempotency-Key": requestKey },
     body: JSON.stringify({ url })
   });
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data?.error || "Audit failed. Please try again.");
+    const error = new Error(data?.error || "Audit failed. Please try again.");
+    error.status = res.status;
+    throw error;
   }
   return data.report;
 }
@@ -57,6 +59,7 @@ export default function App() {
   const ilTimerRef    = useRef(null);
   const ilProgTimerRef = useRef(null);
   const auditAbortedRef = useRef(false);
+  const pendingAuditRef = useRef(null);
   const ilProgRef     = useRef(0);
   const ilStepIdxRef  = useRef(0);
 
@@ -120,16 +123,24 @@ export default function App() {
     setReportData(null);
     setErrorMsg('');
     auditAbortedRef.current = false;
+    if (pendingAuditRef.current?.url !== url) {
+      pendingAuditRef.current = { url, key: crypto.randomUUID() };
+    }
+    const requestKey = pendingAuditRef.current.key;
     showInlineLoading(url);
 
     try {
-      const data = await fetchAuditFromClaude(url);
+      const data = await fetchAuditFromClaude(url, requestKey);
+      if (pendingAuditRef.current?.key === requestKey) pendingAuditRef.current = null;
       if (auditAbortedRef.current) return;
       hideInlineLoading();
       setReportData(data);
       setView('partial');
       window.scrollTo(0, 0);
     } catch (err) {
+      // Preserve the key when the server outcome is uncertain or still running.
+      // The next click checks the same attempt instead of dispatching Claude again.
+      if (err.status !== 503 && err.status !== 409 && pendingAuditRef.current?.key === requestKey) pendingAuditRef.current = null;
       if (auditAbortedRef.current) return;
       hideInlineLoading();
       setErrorMsg('❌ ' + (err.message || 'Audit failed. Please try again.'));

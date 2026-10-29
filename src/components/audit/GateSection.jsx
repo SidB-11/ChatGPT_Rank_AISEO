@@ -30,7 +30,7 @@ export default function GateSection({ onUnlock, reportData, auditUrl, onShowPriv
         setBtnText('Generate Report →');
         return;
       }
-    } catch (e) {
+    } catch {
       shakeErr('Could not save your details. Please try again.');
       setBtnDisabled(false);
       setBtnText('Generate Report →');
@@ -38,8 +38,9 @@ export default function GateSection({ onUnlock, reportData, auditUrl, onShowPriv
     }
 
     try {
+      // eslint-disable-next-line react-hooks/purity
       localStorage.setItem('cr_lead', JSON.stringify({ name: name.trim(), email: email.trim(), ts: Date.now() }));
-    } catch(e) {}
+    } catch { /* Local storage is optional. */ }
 
     await new Promise(r => setTimeout(r, 800));
 

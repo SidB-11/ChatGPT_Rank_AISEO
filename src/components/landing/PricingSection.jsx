@@ -14,7 +14,7 @@ export default function PricingSection({ onScrollToTop }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'Waitlist', email, auditUrl: 'pro-waitlist' })
       }).catch(() => {});
-    } catch(e) {}
+    } catch { /* Waitlist submission is best effort. */ }
     setWaitlistEmail('');
     setWaitlistSuccess(true);
     setTimeout(() => setWaitlistSuccess(false), 4000);

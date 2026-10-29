@@ -36,7 +36,7 @@ export default function PartialReport({ reportData, auditUrl, onGoHome, onUnlock
     }, 300);
 
     return () => { clearTimeout(timer1); clearTimeout(timer2); };
-  }, [reportData]);
+  }, [reportData, score]);
 
   return (
     <div id="partialReport">
